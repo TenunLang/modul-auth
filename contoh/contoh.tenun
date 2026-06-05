@@ -1,0 +1,15 @@
+impor "auth";
+
+// --- Hashing sandi ---
+biar simpan: teks = auth_hash("rahasia123");
+cetak("hash tersimpan: " + simpan);
+cetak(auth_verifikasi("rahasia123", simpan));   // benar
+cetak(auth_verifikasi("salah", simpan));        // salah
+
+// --- JWT ---
+biar rahasia: teks = "kunci-server-yang-panjang";
+biar token: teks = jwt_buat("{\"sub\":\"42\",\"peran\":\"admin\"}", rahasia);
+cetak("token: " + token);
+cetak(jwt_verifikasi(token, rahasia));           // benar
+cetak(jwt_verifikasi(token, "kunci-salah"));     // salah
+cetak(jwt_payload(token));                        // {"sub":"42","peran":"admin"}

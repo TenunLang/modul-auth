@@ -1,0 +1,44 @@
+// Modul Auth untuk Tenun — hashing sandi (PBKDF2) + JWT (HS256).
+// Dibangun di atas builtin kripto: pbkdf2, hmacSha256Raw, base64, dariBase64, acak, xor.
+
+impor "./jwt.tenun";
+
+// Jumlah iterasi PBKDF2. Makin tinggi makin lambat (lebih aman terhadap brute force).
+fungsi auth_iterasi(): bulat {
+    kembali 120000;
+}
+
+// Hash sandi: hasilkan salt acak, turunkan kunci PBKDF2-HMAC-SHA256.
+// Format simpan: "pbkdf2$<iter>$<salt_b64>$<hash_b64>". Salt disimpan agar bisa diverifikasi.
+fungsi auth_hash(sandi: teks): teks {
+    biar salt: teks = acak(16);
+    biar iter: bulat = auth_iterasi();
+    biar dk: teks = pbkdf2(sandi, salt, iter);
+    kembali "pbkdf2$" + keTeks(iter) + "$" + base64(salt) + "$" + base64(dk);
+}
+
+// Bandingkan dua teks dengan waktu konstan (cegah timing attack).
+fungsi auth_sama_aman(a: teks, b: teks): bool {
+    kalau panjangTeks(a) != panjangTeks(b) {
+        kembali salah;
+    }
+    biar beda: bulat = 0;
+    biar i: bulat = 0;
+    selama i < panjangTeks(a) {
+        beda = beda + (bacaInt(a, i, 1, salah) - bacaInt(b, i, 1, salah)) * (bacaInt(a, i, 1, salah) - bacaInt(b, i, 1, salah));
+        i = i + 1;
+    }
+    kembali beda == 0;
+}
+
+// Verifikasi sandi terhadap nilai simpan dari auth_hash.
+fungsi auth_verifikasi(sandi: teks, simpan: teks): bool {
+    biar bagian: []teks = pisah(simpan, "$");
+    kalau panjang(bagian) != 4 {
+        kembali salah;
+    }
+    biar iter: bulat = keBulat(bagian[1]);
+    biar salt: teks = dariBase64(bagian[2]);
+    biar dk: teks = pbkdf2(sandi, salt, iter);
+    kembali auth_sama_aman(base64(dk), bagian[3]);
+}

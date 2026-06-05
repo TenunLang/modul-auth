@@ -1,0 +1,64 @@
+// JWT HS256 (RFC 7519) untuk Tenun.
+// signing input = base64url(header) + "." + base64url(payload)
+// signature     = base64url(HMAC-SHA256(rahasia, signing input))
+
+// base64url: base64 standar -> ganti '+'->'-', '/'->'_', buang padding '='.
+fungsi jwt_b64url_enkode(data: teks): teks {
+    biar b: teks = base64(data);
+    b = ganti(b, "+", "-");
+    b = ganti(b, "/", "_");
+    b = ganti(b, "=", "");
+    kembali b;
+}
+
+// Kembalikan padding '=' sebanyak yang diperlukan agar panjang kelipatan 4.
+fungsi jwt_pad(b: teks): teks {
+    biar sisa: bulat = panjangTeks(b) % 4;
+    kalau sisa == 2 { kembali b + "=="; }
+    kalau sisa == 3 { kembali b + "="; }
+    kembali b;
+}
+
+fungsi jwt_b64url_dekode(b: teks): teks {
+    biar s: teks = ganti(b, "-", "+");
+    s = ganti(s, "_", "/");
+    kembali dariBase64(jwt_pad(s));
+}
+
+// Buat token JWT HS256. payload berupa JSON (teks).
+fungsi jwt_buat(payload: teks, rahasia: teks): teks {
+    biar header: teks = "{\"alg\":\"HS256\",\"typ\":\"JWT\"}";
+    biar si: teks = jwt_b64url_enkode(header) + "." + jwt_b64url_enkode(payload);
+    biar sig: teks = jwt_b64url_enkode(hmacSha256Raw(rahasia, si));
+    kembali si + "." + sig;
+}
+
+// Verifikasi tanda tangan token (waktu konstan).
+fungsi jwt_verifikasi(token: teks, rahasia: teks): bool {
+    biar bagian: []teks = pisah(token, ".");
+    kalau panjang(bagian) != 3 {
+        kembali salah;
+    }
+    biar si: teks = bagian[0] + "." + bagian[1];
+    biar harap: teks = jwt_b64url_enkode(hmacSha256Raw(rahasia, si));
+    kalau panjangTeks(harap) != panjangTeks(bagian[2]) {
+        kembali salah;
+    }
+    biar beda: bulat = 0;
+    biar i: bulat = 0;
+    selama i < panjangTeks(harap) {
+        biar d: bulat = bacaInt(harap, i, 1, salah) - bacaInt(bagian[2], i, 1, salah);
+        beda = beda + d * d;
+        i = i + 1;
+    }
+    kembali beda == 0;
+}
+
+// Ambil payload (JSON teks) dari token tanpa verifikasi. Verifikasi dulu sebelum percaya.
+fungsi jwt_payload(token: teks): teks {
+    biar bagian: []teks = pisah(token, ".");
+    kalau panjang(bagian) < 2 {
+        kembali "";
+    }
+    kembali jwt_b64url_dekode(bagian[1]);
+}
