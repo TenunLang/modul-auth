@@ -1,7 +1,7 @@
 {
   "nama": "auth",
-  "versi": "0.1.0",
-  "deskripsi": "Autentikasi untuk Tenun: hashing sandi PBKDF2 + JWT HS256.",
+  "versi": "0.2.0",
+  "deskripsi": "Autentikasi untuk Tenun: hashing sandi PBKDF2 + JWT HS256 (exp), Bearer header, token acak.",
   "lisensi": "MIT",
   "penulis": "TenunLang",
   "berkas": "src/auth.tenun",

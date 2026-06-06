@@ -42,3 +42,61 @@ fungsi auth_verifikasi(sandi: teks, simpan: teks): bool {
     biar dk: teks = pbkdf2(sandi, salt, iter);
     kembali auth_sama_aman(base64(dk), bagian[3]);
 }
+
+// ---- Token sesi JWT (dengan kedaluwarsa) ----
+
+// Buat JWT untuk subjek (mis. id/email pengguna) yang berlaku `ttl_detik`.
+// Payload: {"sub":<sub>,"iat":<sekarang>,"exp":<sekarang+ttl>}.
+fungsi auth_jwt(sub: teks, rahasia: teks, ttl_detik: bulat): teks {
+    biar iat: bulat = waktu();
+    biar exp: bulat = iat + ttl_detik;
+    biar payload: teks = "{\"sub\":\"" + sub + "\",\"iat\":" + keTeks(iat) + ",\"exp\":" + keTeks(exp) + "}";
+    kembali jwt_buat(payload, rahasia);
+}
+
+// Cek token: tanda tangan valid DAN belum kedaluwarsa.
+fungsi auth_cek(token: teks, rahasia: teks): bool {
+    kalau jwt_verifikasi(token, rahasia) == salah {
+        kembali salah;
+    }
+    biar p: teks = jwt_payload(token);
+    biar exp: bulat = jsonAngka(p, "exp");
+    kalau exp > 0 {
+        kalau waktu() >= exp {
+            kembali salah;
+        }
+    }
+    kembali benar;
+}
+
+// Subjek (sub) dari token. Verifikasi dengan auth_cek dulu sebelum percaya.
+fungsi auth_subjek(token: teks): teks {
+    kembali jsonTeks(jwt_payload(token), "sub");
+}
+
+// Klaim teks lain dari payload token.
+fungsi auth_klaim(token: teks, kunci: teks): teks {
+    kembali jsonTeks(jwt_payload(token), kunci);
+}
+
+// ---- Header Authorization ----
+
+// Ambil token dari header "Authorization: Bearer <token>" ("" bila tidak ada).
+fungsi auth_bearer(): teks {
+    biar h: teks = headerMasuk("Authorization");
+    kalau mulaiDengan(h, "Bearer ") {
+        kembali potong(h, 7, panjangTeks(h) - 7);
+    }
+    kembali "";
+}
+
+// ---- Token acak (API key / reset / verifikasi email) ----
+
+// Token acak base64url `nbyte` byte (aman dipakai di URL).
+fungsi auth_token_acak(nbyte: bulat): teks {
+    biar b: teks = base64(acak(nbyte));
+    b = ganti(b, "+", "-");
+    b = ganti(b, "/", "_");
+    b = ganti(b, "=", "");
+    kembali b;
+}
