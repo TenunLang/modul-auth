@@ -1,0 +1,8 @@
+impor "../src/auth.tenun";
+biar h: teks = auth_hash("rahasia123");
+tegas(auth_verifikasi("rahasia123", h), "verifikasi sandi benar");
+tegas(!auth_verifikasi("salah", h), "tolak sandi salah");
+biar t: teks = auth_jwt("budi", "kunci", 3600);
+tegas(auth_cek(t, "kunci"), "jwt valid");
+tegas(!auth_cek(t, "kunciSalah"), "jwt tanda tangan salah ditolak");
+tegasSama(auth_subjek(t), "budi", "subjek jwt");

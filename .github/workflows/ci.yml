@@ -22,3 +22,5 @@ jobs:
           printf 'impor "auth";\n' > cek.tenun
           "$HOME/.tenun/bin/tenun" run cek.tenun
           echo "modul auth valid (parse + pengecekan tipe lolos)"
+      - name: Uji unit
+        run: "$HOME/.tenun/bin/tenun" check .
