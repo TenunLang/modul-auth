@@ -23,4 +23,5 @@ jobs:
           "$HOME/.tenun/bin/tenun" run cek.tenun
           echo "modul auth valid (parse + pengecekan tipe lolos)"
       - name: Uji unit
-        run: "$HOME/.tenun/bin/tenun" check .
+        run: |
+          "$HOME/.tenun/bin/tenun" check .
